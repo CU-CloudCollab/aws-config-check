@@ -34,12 +34,26 @@ def check_iam
   iam_summary_map = resp.summary_map
 
   puts "Checking IAM root user"
-  puts "\tAccess key is configured for root user" if iam_summary_map["AccountAccessKeysPresent"] != 1
-  puts "\tMFA is NOT enabled for root user" if iam_summary_map["AccountMFAEnabled"] != 1
+  if iam_summary_map["AccountAccessKeysPresent"] != 1 then
+    puts "\tAccess key is configured for root user"
+    puts "\t\tPlease remove access keys for the root user."
+    puts "\t\tAccess keys should be associated only with accounts assigned to specific individuals."
+  end
+  if iam_summary_map["AccountMFAEnabled"] != 1 then
+    puts "\tMFA is NOT enabled for root user."
+    puts "\t\tPlease enable MFA for the root user and secure the MFA device."
+    puts "\t\tIf you need an MFA device contact cloud-support@cornell.edu."
+  end
 
   puts "Checking IAM identity provider configuration"
-  puts "\tNo identity providers are configured" if iam_summary_map["Providers"] == 0
-  puts "\tMultiple identity providers are configured" if iam_summary_map["Providers"] > 1
+  if iam_summary_map["Providers"] == 0
+    puts "\tNo identity providers are configured"
+    contact_cloud_support
+  end
+  if iam_summary_map["Providers"] > 1
+    puts "\tMultiple identity providers are configured"
+    contact_cloud_support
+  end
 
   resp = @iam.list_saml_providers
 
@@ -51,9 +65,14 @@ def check_iam
       cornell_saml = true
     else
       puts "\tUnknown SAML identity provider #{provider.arn}"
+      contact_cloud_support
     end
   end
-  puts "\tCornell SAML identity provider is not configured" if !cornell_saml
+
+  if !cornell_saml then
+    puts "\tCornell SAML identity provider is not configured."
+    contact_cloud_support
+  end
 
   puts "Checking IAM user passwords"
   resp = @iam.list_users()
@@ -61,7 +80,9 @@ def check_iam
     # puts "#{user}"
     begin
       resp = @iam.get_login_profile(user_name: user.user_name)
-      puts "\tPassword is configured for IAM user '#{user.user_name}'"
+      puts "\tPassword is configured for IAM user '#{user.user_name}'."
+      puts "\t\tAll AWS access should be accomplished through Shibboleth and Cornell netID credentials."
+      puts "\t\tPlease delete the password for this user."
     rescue Aws::IAM::Errors::NoSuchEntity
       # no password is configured
     end
@@ -107,9 +128,11 @@ def check_config_cloud_trail(region, config_rules)
        cloud_trail_rule_present = true
        if rule.maximum_execution_frequency != "TwentyFour_Hours" then
          puts "\tConfig rule to check that CloudTrail is enabled has frequency of #{rule.maximum_execution_frequency}. Should be 24 hours frequency."
+         contact_cloud_support
        end
        if rule.config_rule_state != "ACTIVE" then
          puts "\tConfig rule to check that CloudTrail is enabled is itself present but not enabled"
+         contact_cloud_support
       end
     else
       # not a cloud trail rule
@@ -117,6 +140,7 @@ def check_config_cloud_trail(region, config_rules)
   end
   if !cloud_trail_rule_present && region == "us-east-1" then
     puts "\t[#{region}] Config rule to check that CloudTrail is enabled is missing."
+    contact_cloud_support
   end
 end
 
@@ -163,6 +187,7 @@ def check_cloudtrail
 
   if itso_trails.empty? then
     puts "\tITSO CloudTrail for logging all API access is missing."
+    contact_cloud_support
   else
 
     itso_trails.each do | trail |
@@ -172,6 +197,7 @@ def check_cloudtrail
     end
     if !itso_trail_valid then
       puts "\tAn ITSO CloudTrail is present but appears does not appear to be configured properly."
+      contact_cloud_support
     end
     errors_summary.each { | msg | puts msg }
   end
@@ -181,6 +207,7 @@ def check_cloudtrail
 
   if global_trails.empty? then
     puts "\tNo trail is configured to log events in all regions. This account may need to transition to the 'multi-region' trail configuration where a single trail can log events in all regions."
+    contact_cloud_support
   else
     global_trails.each do | trail |
       errors = cloudtrail_is_active_trail? (trail)
@@ -220,6 +247,10 @@ def cloudtrail_is_active_trail? (trail)
     errors << "\tTrail is not logging (#{trail.trail_arn})."
   end
   return errors
+end
+
+def contact_cloud_support
+  puts "\t\tPlease contact cloud-support@cornell.edu about this issue."
 end
 
 check_iam
