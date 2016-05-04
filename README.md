@@ -4,7 +4,7 @@ The repo contains simple Ruby scripts to check an AWS account against configurat
 
 ### Configuration Checks ###
 
-* Basic Cornell policy for organizational use of AWS are outlined in [Cloudification Service Details](https://blogs.cornell.edu/cloudification/cloudification-service/).
+The baseline Cornell policy for organizational use of AWS are outlined in [Cloudification Service Details](https://blogs.cornell.edu/cloudification/cloudification-service/).
 
 This code checks for the following:
 
