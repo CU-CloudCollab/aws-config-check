@@ -24,7 +24,7 @@ This code checks for the following:
     * alerts if rule is not ACTIVE
     * alerts if rule is not present in us-east-1
 * AWS CloudTrail
-  * ITSO trail
+  * ITSO auditing trail
     * alerts if ITSO trail is not present
     * alerts if ITSO trail is not logging
     * alerts if ITSO trail is not enabled for global events and multi-regions
