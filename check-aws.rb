@@ -34,7 +34,7 @@ def check_iam
   iam_summary_map = resp.summary_map
 
   puts "Checking IAM root user"
-  if iam_summary_map["AccountAccessKeysPresent"] != 1 then
+  if iam_summary_map["AccountAccessKeysPresent"] != 0 then
     puts "\tAccess key is configured for root user"
     puts "\t\tPlease remove access keys for the root user."
     puts "\t\tAccess keys should be associated only with accounts assigned to specific individuals."
