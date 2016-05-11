@@ -9,6 +9,7 @@ The baseline Cornell policy for organizational use of AWS are outlined in [Cloud
 This code checks for the following:
 
 * IAM
+  *  Check that exactly one account alias is configured. Show the alias.
   * root user
     * alerts if access key configured
     * alerts if MFA is not enabled
