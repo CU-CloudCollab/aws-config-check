@@ -31,6 +31,15 @@ def check_iam
 
   @iam = Aws::IAM::Client.new
 
+  puts "Checking IAM account alias"
+  resp = @iam.list_account_aliases
+  if resp.account_aliases.length != 1
+    puts "\tNo account alias is configured."
+    contact_cloud_support
+  else
+    puts "\tAlias is '#{resp.account_aliases[0]}'."
+  end
+
   resp = @iam.get_account_summary()
   iam_summary_map = resp.summary_map
 
