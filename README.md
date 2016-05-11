@@ -38,11 +38,11 @@ This code checks for the following:
 
 Add your ideas for additional checks as issues to this repo.
 
-## Notes ##
+### Notes ###
 
 The check-aws.rb script will alert on CloudTrail configs that uses one trail for each region. We are transitioning to the multi-region style of trail, and not all accounts are transitioned yet.
 
-### How do I run it? ###
+## How do I run it? ##
 
 #### Prerequisites ####
 
