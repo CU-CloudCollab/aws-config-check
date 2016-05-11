@@ -24,7 +24,7 @@ This code checks for the following:
     * alerts if rule is not ACTIVE
     * alerts if rule is not present in us-east-1
 * AWS CloudTrail
-  * ITSO trail
+  * ITSO auditing trail
     * alerts if ITSO trail is not present
     * alerts if ITSO trail is not logging
     * alerts if ITSO trail is not enabled for global events and multi-regions
@@ -37,6 +37,10 @@ This code checks for the following:
     * warns that account may need to have multi-region trail added if no global and multi-region trail is found
 
 Add your ideas for additional checks as issues to this repo.
+
+## Notes ##
+
+The check-aws.rb script will alert on CloudTrail configs that uses one trail for each region. We are transitioning to the multi-region style of trail, and not all accounts are transitioned yet.
 
 ### How do I run it? ###
 
