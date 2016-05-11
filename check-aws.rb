@@ -8,11 +8,9 @@ require_relative 'cornell_saml_x509'
 ## See http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 ## See also https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs
 Aws.config.update({
-  region: 'us-east-1',
-  credentials: Aws::SharedCredentials.new()
+   region: 'us-east-1'
+#   credentials: Aws::SharedCredentials.new()
 })
-
-puts "Using AWS profile \"#{Aws.config[:credentials].profile_name}\"..."
 
 ################################
 # IAM
