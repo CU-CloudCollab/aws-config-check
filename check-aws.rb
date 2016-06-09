@@ -136,8 +136,8 @@ def check_config_cloud_trail(region, config_rules)
   config_rules.each do | rule |
     if rule.source.source_identifier == "CLOUD_TRAIL_ENABLED" && rule.source.owner == "AWS" then
        cloud_trail_rule_present = true
-       if rule.maximum_execution_frequency != "TwentyFour_Hours" then
-         puts "\tConfig rule to check that CloudTrail is enabled has frequency of #{rule.maximum_execution_frequency}. Should be 24 hours frequency."
+       if rule.maximum_execution_frequency != "TwentyFour_Hours" && rule.maximum_execution_frequency != "One_Hour" then
+         puts "\tConfig rule to check that CloudTrail is enabled has frequency of #{rule.maximum_execution_frequency}. Should be 1 hour or 24 hours frequency."
          contact_cloud_support
        end
        if rule.config_rule_state != "ACTIVE" then
