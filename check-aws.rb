@@ -259,10 +259,84 @@ def cloudtrail_is_active_trail? (trail)
   return errors
 end
 
+################################
+# AWS NACLS
+#
+# - alerts if there are missing NACL rules
+#
+################################
+def check_nacls
+
+  puts "Checking default NACLS in each region..."
+
+  ec2  = Aws::EC2::Client.new
+
+  regions = ec2.describe_regions({})
+
+  regions.regions.each do |region|
+    puts "...#{region.region_name}"
+
+    Aws.config[:region] = region.region_name
+    ec2 = Aws::EC2::Client.new
+
+    nacls = ec2.describe_network_acls({})
+
+    nacls.network_acls.each do |acl|
+
+      rule_map = [
+        {cidr: "10.0.0.0/8", egress: true, matched: 0},
+        {cidr: "10.0.0.0/8", egress: false,  matched: 0},
+        {cidr: "128.84.0.0/16", egress: true, matched: 0},
+        {cidr: "128.84.0.0/16", egress: false,  matched: 0},
+        {cidr: "128.253.0.0/16", egress: true, matched: 0},
+        {cidr: "128.253.0.0/16", egress: false,  matched: 0},
+        {cidr: "132.236.0.0/16", egress: true, matched: 0},
+        {cidr: "132.236.0.0/16", egress: false,  matched: 0},
+        {cidr: "192.35.82.0/24", egress: true, matched: 0},
+        {cidr: "192.35.82.0/24", egress: false,  matched: 0},
+        {cidr: "192.122.235.0/24", egress: true, matched: 0},
+        {cidr: "192.122.235.0/24", egress: false,  matched: 0},
+        {cidr: "192.122.236.0/24", egress: true, matched: 0},
+        {cidr: "192.122.236.0/24", egress: false,  matched: 0},
+        {cidr: "0.0.0.0/0", egress: true, from: 80, to: 80, matched: 0},
+        {cidr: "0.0.0.0/0", egress: false, from: 80, to: 80, matched: 0},
+        {cidr: "0.0.0.0/0", egress: true, from: 443, to: 443, matched: 0},
+        {cidr: "0.0.0.0/0", egress: false, from: 443, to: 443, matched: 0},
+        {cidr: "0.0.0.0/0", egress: true, from: 1024, to: 65535, matched: 0},
+        {cidr: "0.0.0.0/0", egress: false, from: 1024, to: 65535, matched: 0},
+      ]
+
+      acl.entries.each do |entry|
+        if acl.is_default
+          if entry.rule_number < 32767
+            if entry.port_range.nil?
+              rule = rule_map.find {|rule| rule[:cidr] == entry.cidr_block and rule[:egress] == entry.egress}
+              rule[:matched] = 1 if rule
+            else
+              rule = rule_map.find {|rule| rule[:cidr] == entry.cidr_block and rule[:egress] == entry.egress and rule[:to] == entry.port_range.to and rule[:from] == entry.port_range.from}
+              rule[:matched] = 1 if rule
+            end
+          end
+        end
+      end
+      unmatched = rule_map.find_all {|rule| rule[:matched] == 0}
+      if unmatched.length > 0
+        puts "\tUnmatched rule(s) in #{acl.network_acl_id} in VPC #{acl.vpc_id}"
+        unmatched.each do |rule|
+          puts "\t\t" + rule.to_s
+        end
+        contact_cloud_support
+      end
+    end
+  end
+
+end
+
 def contact_cloud_support
   puts "\t\tPlease contact cloud-support@cornell.edu about this issue."
 end
 
-check_iam
-check_config
-check_cloudtrail
+#check_iam
+#check_config
+#check_cloudtrail
+check_nacls
