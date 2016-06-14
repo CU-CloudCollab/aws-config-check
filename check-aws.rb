@@ -336,7 +336,7 @@ def contact_cloud_support
   puts "\t\tPlease contact cloud-support@cornell.edu about this issue."
 end
 
-#check_iam
-#check_config
-#check_cloudtrail
+check_iam
+check_config
+check_cloudtrail
 check_nacls
