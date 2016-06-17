@@ -372,6 +372,6 @@ def contact_cloud_support
 end
 
 check_iam
-#check_config
-#check_cloudtrail
-#check_nacls
+check_config
+check_cloudtrail
+check_nacls
