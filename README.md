@@ -71,7 +71,7 @@ The check-aws.rb script will alert on CloudTrail configs that uses one trail for
   * aws-sdk (2.2.32)
   * aws-sdk-core (2.2.32)
   * aws-sdk-resources (2.2.32)
-  To install these execute `$ gem install aws-sdk`
+  * To install these execute `$ gem install aws-sdk`
 
 #### Running the code ####
 
