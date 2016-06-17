@@ -6,6 +6,7 @@ require_relative 'cornell_saml_x509'
 
 # How old can an IAM access key be before warning about rotation.
 IAM_ACCESS_KEY_WARNING_AGE_DAYS = 90
+VERBOSE = false
 
 ## Expects AWS credntials set up in ~/.aws/config OR in evironment variables
 ## See http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
@@ -59,19 +60,12 @@ def check_iam
   end
 
   puts "Checking IAM identity provider configuration"
-  if iam_summary_map["Providers"] == 0
-    puts "\tNo identity providers are configured"
-    contact_cloud_support
-  end
-  if iam_summary_map["Providers"] > 1
-    puts "\tMultiple identity providers are configured"
-    contact_cloud_support
-  end
 
   resp = @iam.list_saml_providers
 
   cornell_saml = false
   resp.saml_provider_list.each do | provider |
+    puts "\t...#{provider.arn}" if VERBOSE
     resp = @iam.get_saml_provider(saml_provider_arn: provider.arn)
     # puts "#{resp.saml_metadata_document}"
     if resp.saml_metadata_document.include? CornellSamlX509.public_key
@@ -87,10 +81,20 @@ def check_iam
     contact_cloud_support
   end
 
-  puts "Checking IAM user passwords"
+  if iam_summary_map["Providers"] == 0
+    puts "\tNo identity providers are configured"
+    contact_cloud_support
+  end
+  if iam_summary_map["Providers"] > 1
+    puts "\tMultiple identity providers are configured"
+    contact_cloud_support
+  end
+
+  puts "Checking IAM user passwords..."
   resp = @iam.list_users()
-  resp.users.each do |user|
-    # puts "#{user}"
+  users = resp.users
+  users.each do |user|
+    puts "\t...#{user.user_name}" if VERBOSE
     begin
       resp = @iam.get_login_profile(user_name: user.user_name)
       puts "\tPassword is configured for IAM user '#{user.user_name}'."
@@ -102,15 +106,26 @@ def check_iam
   end
 
   puts "Checking IAM access keys"
-  resp = @iam.list_access_keys({})
-  resp.access_key_metadata.each do | ak |
-    puts "\tuser: #{ak.user_name}\tkey: #{ak.access_key_id}\tstatus: #{ak.status}\tcreated: #{ak.create_date}"
-    resp = @iam.get_access_key_last_used({access_key_id: ak.access_key_id})
-    puts "\t\tlast_used: #{resp.access_key_last_used.last_used_date}\tfor service: #{resp.access_key_last_used.service_name}\tin region: #{resp.access_key_last_used.region}"
-    expire_date = ak.create_date + (60*60*24*IAM_ACCESS_KEY_WARNING_AGE_DAYS)
-    if ((expire_date <=> Time.now) < 0 && ak.status == 'Active') then
-      puts "\tWARNING: Key (#{ak.access_key_id}) is over #{IAM_ACCESS_KEY_WARNING_AGE_DAYS} days old and should be rotated!"
-      puts "\t\tSee http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_RotateAccessKey"
+  users.each do |user|
+    puts "\t...#{user.user_name}" if VERBOSE
+    resp = @iam.list_access_keys({user_name: user.user_name})
+    resp.access_key_metadata.each do | ak |
+      expire_date = ak.create_date + (60*60*24*IAM_ACCESS_KEY_WARNING_AGE_DAYS)
+      expired = ((expire_date <=> Time.now) < 0 && ak.status == 'Active')
+      if (expired || VERBOSE) then
+        puts "\tuser: #{ak.user_name}\tkey: #{ak.access_key_id}"
+      end
+      if expired then
+        puts "\tWARNING: Active key is over #{IAM_ACCESS_KEY_WARNING_AGE_DAYS} days old and should be rotated!"
+      end
+      if (expired || VERBOSE) then
+        puts "\t\tstatus: #{ak.status}"
+        puts "\t\tcreated: #{ak.create_date}"
+        resp = @iam.get_access_key_last_used({access_key_id: ak.access_key_id})
+        puts "\t\tlast_used: #{resp.access_key_last_used.last_used_date}"
+        puts "\t\tfor service: #{resp.access_key_last_used.service_name}"
+        puts "\t\tin region: #{resp.access_key_last_used.region}"
+      end
     end
   end
 
@@ -294,6 +309,26 @@ def cloudtrail_is_active_trail? (trail)
   return errors
 end
 
+def check_vpc
+  check_nacls
+  check_flow_logs
+end
+
+def check_flow_logs
+  puts "Checking VPC Flow Logs"
+
+  client = Aws::EC2::Client.new
+  resp = client.describe_flow_logs({})
+  if resp.flow_logs.empty?
+    puts "\tNo flow logs are enabled. If your account requires flow logs for auditing or troubleshooting, contact cloud-support@cornell.edu."
+  end
+
+  # resp.flow_logs.each do | log |
+  #     puts log.inspect
+  # end
+
+end
+
 ################################
 # AWS NACLS
 #
@@ -374,4 +409,4 @@ end
 check_iam
 check_config
 check_cloudtrail
-check_nacls
+check_vpc
