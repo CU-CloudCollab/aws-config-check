@@ -107,6 +107,8 @@ end # check_iam
 #   - alerts if frequency is not 24 hours
 #   - alerts if rule is not ACTIVE
 #   - alerts if rule is not present in us-east-1
+#   - alerts if rule has not been evaluated in past 24 hours
+#   - alerts if rule is not compliant
 ################################
 def check_config
 
@@ -125,13 +127,13 @@ def check_config
     puts "...#{region}"
     client = Aws::ConfigService::Client.new(region: region)
     resp = client.describe_config_rules
-    check_config_cloud_trail(region, resp.config_rules)
+    check_config_cloud_trail(client, region, resp.config_rules)
   end
 
 
 end
 
-def check_config_cloud_trail(region, config_rules)
+def check_config_cloud_trail(client, region, config_rules)
   cloud_trail_rule_present = false
   config_rules.each do | rule |
     if rule.source.source_identifier == "CLOUD_TRAIL_ENABLED" && rule.source.owner == "AWS" then
@@ -143,6 +145,23 @@ def check_config_cloud_trail(region, config_rules)
        if rule.config_rule_state != "ACTIVE" then
          puts "\tConfig rule to check that CloudTrail is enabled is itself present but not enabled"
          contact_cloud_support
+      end
+      response = client.describe_config_rule_evaluation_status({
+        config_rule_names: [rule.config_rule_name]
+        })
+      eval_status = response.config_rules_evaluation_status.first
+      yesterday = Time.now - (60 * 60 * 24)
+      if ((yesterday <=> eval_status.last_successful_invocation_time) > 0 ) then
+         puts "\tConfig rule to check that CloudTrail is enabled has not been executed within past 24 hours. It was last executed at: #{eval_status.last_successful_invocation_time}"
+         contact_cloud_support
+      end
+
+      response = client.get_compliance_details_by_config_rule({
+          config_rule_name: rule.config_rule_name
+        })
+      if (response.evaluation_results.first.compliance_type != "COMPLIANT") then
+        puts "\tConfig rule to check that CloudTrail is enabled indicates that CloudTrail is NOT enabled. Rule compliance: #{response.evaluation_results.first.compliance_type} evaluated at #{response.evaluation_results.first.config_rule_invoked_time}"
+        contact_cloud_support
       end
     else
       # not a cloud trail rule
@@ -167,7 +186,6 @@ end
 #   - alerts if Main trail is not logging
 #   - alerts if Main trail is not enabled for global events and multi-regions
 #   - alerts if Main trail has not delivered results within the last 12 hours
-#
 ################################
 def check_cloudtrail
 
@@ -232,7 +250,7 @@ def check_cloudtrail
 end
 
 def cloudtrail_is_itso_trail? (trail)
-  (trail.trail_arn =~ /arn:aws:cloudtrail:us-east-1:.*:trail\/itso/)
+  (trail.trail_arn =~ /arn:aws:cloudtrail:us-east-1:.*:trail\/.*[Ii][Tt][Ss][Oo].*/)
 end
 
 def cloudtrail_is_global_trail? (trail)

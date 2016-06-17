@@ -24,6 +24,8 @@ This code checks for the following:
     * alerts if frequency is not 24 hours
     * alerts if rule is not ACTIVE
     * alerts if rule is not present in us-east-1
+    * alerts if rule hasn't been run in the past 24 hours
+    * alerts if last evaluation of rule result in NONCOMPLIANT result
 * AWS CloudTrail
   * ITSO auditing trail
     * alerts if ITSO trail is not present
@@ -36,6 +38,8 @@ This code checks for the following:
     * alerts if main trail is not enabled for global events and multi-regions
     * alerts if main trail has not delivered results within the last 12 hours
     * warns that account may need to have multi-region trail added if no global and multi-region trail is found
+* Network ACLs
+  * checks that [baseline network ACL](https://confluence.cornell.edu/display/CLOUD/Baseline+AWS+Network+ACL) is present in all regions
 
 Add your ideas for additional checks as issues to this repo.
 
