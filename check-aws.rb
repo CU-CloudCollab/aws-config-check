@@ -4,6 +4,9 @@ require 'aws-sdk'
 require 'pp'
 require_relative 'cornell_saml_x509'
 
+# How old can an IAM access key be before warning about rotation.
+IAM_ACCESS_KEY_WARNING_AGE_DAYS = 90
+
 ## Expects AWS credntials set up in ~/.aws/config OR in evironment variables
 ## See http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 ## See also https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs
@@ -97,6 +100,20 @@ def check_iam
       # no password is configured
     end
   end
+
+  puts "Checking IAM access keys"
+  resp = @iam.list_access_keys({})
+  resp.access_key_metadata.each do | ak |
+    puts "\tuser: #{ak.user_name}\tkey: #{ak.access_key_id}\tstatus: #{ak.status}\tcreated: #{ak.create_date}"
+    resp = @iam.get_access_key_last_used({access_key_id: ak.access_key_id})
+    puts "\t\tlast_used: #{resp.access_key_last_used.last_used_date}\tfor service: #{resp.access_key_last_used.service_name}\tin region: #{resp.access_key_last_used.region}"
+    expire_date = ak.create_date + (60*60*24*IAM_ACCESS_KEY_WARNING_AGE_DAYS)
+    if ((expire_date <=> Time.now) < 0 && ak.status == 'Active') then
+      puts "\tWARNING: Key (#{ak.access_key_id}) is over #{IAM_ACCESS_KEY_WARNING_AGE_DAYS} days old and should be rotated!"
+      puts "\t\tSee http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_RotateAccessKey"
+    end
+  end
+
 
 end # check_iam
 
@@ -355,6 +372,6 @@ def contact_cloud_support
 end
 
 check_iam
-check_config
-check_cloudtrail
-check_nacls
+#check_config
+#check_cloudtrail
+#check_nacls

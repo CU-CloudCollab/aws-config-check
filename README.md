@@ -19,6 +19,9 @@ This code checks for the following:
     * alerts if Cornell IDP is not found
   * IAM user passwords
     * alerts if password is configured for any IAM user
+  * IAM access keys
+    * alerts if an active key is more than 90 days old
+      * [How to rotate IAM access keys](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_RotateAccessKey)
 * AWS Config
   * CLOUD_TRAIL_ENABLED rule
     * alerts if frequency is not 24 hours
