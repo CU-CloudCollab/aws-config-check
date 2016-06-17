@@ -129,8 +129,33 @@ def check_iam
     end
   end
 
+  check_password_policy
 
 end # check_iam
+
+# password policy parameters
+PASSWORD_MINIMUM_LENGTH = 14
+PASSWORD_MAXUMUM_AGE_DAYS = 90
+PASSWORD_REUSE = 3
+
+def check_password_policy
+  puts "Checking IAM password policy"
+  client = Aws::IAM::Client.new
+  resp = client.get_account_password_policy
+  pp = resp.password_policy
+
+  puts "\tPassword policy should require sybmols in passwords." if !pp.require_symbols
+  puts "\tPassword policy should require numbers in passwords." if !pp.require_numbers
+  puts "\tPassword policy should require lowercase characters in passwords." if !pp.require_uppercase_characters
+  puts "\tPassword policy should require uppercase characters in passwords." if !pp.require_lowercase_characters
+  puts "\tPassword policy should allow users to change their own passwords." if !pp.allow_users_to_change_password
+  puts "\tPassword policy should allow users set new password after expiration." if pp.hard_expiry
+
+  puts "\tPassword policy should require minimum password length of #{PASSWORD_MINIMUM_LENGTH} or more." if pp.minimum_password_length < PASSWORD_MINIMUM_LENGTH
+  puts "\tPassword policy should require maxmimum password age #{PASSWORD_MAXUMUM_AGE_DAYS} days or less." if pp.max_password_age > PASSWORD_MAXUMUM_AGE_DAYS
+  puts "\tPassword policy should require at least #{PASSWORD_REUSE} new, different passwords before a password is reused." if pp.password_reuse_prevention < PASSWORD_REUSE
+
+end #check_password_policy
 
 ################################
 # AWS Config
