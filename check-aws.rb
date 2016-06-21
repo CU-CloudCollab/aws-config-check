@@ -339,19 +339,29 @@ def check_vpc
   check_flow_logs
 end
 
+################################
+# AWS Flow Logs
+#
+# Cornell standard flow log configuration is not final. So at present this
+# just tells if there are no flow logs configured, or lists the flow logs
+# if any exist.
+#
+################################
+
 def check_flow_logs
   puts "Checking VPC Flow Logs"
 
-  client = Aws::EC2::Client.new
+  client  = Aws::EC2::Client.new( region: 'us-east-1' )
+
   resp = client.describe_flow_logs({})
   if resp.flow_logs.empty?
-    puts "\tNo flow logs are enabled. If your account requires flow logs for auditing or troubleshooting, contact cloud-support@cornell.edu."
+    puts "\tNo flow logs are enabled. If your AWS account requires flow logs for auditing or troubleshooting, contact cloud-support@cornell.edu."
+  else
+    puts "\tFound flow logs:"
+    resp.flow_logs.each do |flog|
+      puts "\t\tflow-log-id:#{flog.flow_log_id} status:#{flog.flow_log_status} resource-id:#{flog.resource_id} traffic-type:#{flog.traffic_type} log-group-name:#{flog.log_group_name}"
+    end
   end
-
-  # resp.flow_logs.each do | log |
-  #     puts log.inspect
-  # end
-
 end
 
 ################################

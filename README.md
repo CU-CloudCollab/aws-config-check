@@ -52,8 +52,11 @@ This code checks for the following:
     * alerts if main trail is not enabled for global events and multi-regions
     * alerts if main trail has not delivered results within the last 12 hours
     * warns that account may need to have multi-region trail added if no global and multi-region trail is found
-* Network ACLs
-  * checks that [baseline network ACL](https://confluence.cornell.edu/display/CLOUD/Baseline+AWS+Network+ACL) is present in all regions
+* VPC
+  * Network ACLs
+    * checks that [baseline network ACL](https://confluence.cornell.edu/display/CLOUD/Baseline+AWS+Network+ACL) is present in all regions
+  * Flow logs
+    * Since there is not yet a Cornell standard flow log configuration deployed, simple identify any existing flow logs, or state that there are none.
 
 Add your ideas for additional checks as issues to this repo.
 
