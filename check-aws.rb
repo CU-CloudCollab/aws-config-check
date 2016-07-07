@@ -323,7 +323,7 @@ def cloudtrail_is_active_trail? (trail)
   errors = []
   if resp.is_logging then
     # 60*60*12 = # of seconds in 12 hours
-    if resp.latest_delivery_time + (60*60*12) < Time.now then
+    if resp.latest_delivery_time.nil? || (resp.latest_delivery_time + (60*60*12) < Time.now) then
       isvalid = false
       errors << "\tTrail has not delivered logs for more than 12 hours (#{trail.trail_arn}). Last successful delivery was #{resp.latest_delivery_time}"
     end
