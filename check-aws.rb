@@ -135,7 +135,7 @@ end # check_iam
 
 # password policy parameters
 PASSWORD_MINIMUM_LENGTH = 14
-PASSWORD_MAXUMUM_AGE_DAYS = 90
+PASSWORD_MAXIMUM_AGE_DAYS = 90
 PASSWORD_REUSE = 3
 
 def check_password_policy
@@ -152,8 +152,8 @@ def check_password_policy
   puts "\tPassword policy should allow users set new password after expiration." if pp.hard_expiry
 
   puts "\tPassword policy should require minimum password length of #{PASSWORD_MINIMUM_LENGTH} or more." if pp.minimum_password_length < PASSWORD_MINIMUM_LENGTH
-  puts "\tPassword policy should require maxmimum password age #{PASSWORD_MAXUMUM_AGE_DAYS} days or less." if pp.max_password_age > PASSWORD_MAXUMUM_AGE_DAYS
-  puts "\tPassword policy should require at least #{PASSWORD_REUSE} new, different passwords before a password is reused." if pp.password_reuse_prevention < PASSWORD_REUSE
+  puts "\tPassword policy should require maximum password age #{PASSWORD_MAXIMUM_AGE_DAYS} days or less." if !pp.max_password_age || pp.max_password_age > PASSWORD_MAXIMUM_AGE_DAYS
+  puts "\tPassword policy should require at least #{PASSWORD_REUSE} new, different passwords before a password is reused." if !pp.password_reuse_prevention || pp.password_reuse_prevention < PASSWORD_REUSE
 
 end #check_password_policy
 
