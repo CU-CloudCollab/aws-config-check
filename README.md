@@ -1,3 +1,7 @@
+# Deprecated #
+
+This repo has been deprecated in favor of https://github.com/CU-CloudCollab/cucloud_utils.
+
 # README #
 
 The repo contains simple Ruby scripts to check an AWS account against configuration required by Cornell policy.
